@@ -1,6 +1,7 @@
-import { Player, Obstacle } from "./entities.js";
+import { Player, Obstacle, Ground } from "./entities.js";
 
 const c = document.getElementById("canvas");
+const restartButton = document.getElementById("restart-button");
 const ctx = c.getContext("2d");
 const w = c.clientWidth;
 const h = c.clientHeight;
@@ -17,6 +18,7 @@ let scoreIntervalTimer = performance.now();
 
 const player = new Player(50, DEFAULT_GAME_HEIGHT);
 let obstacles = [];
+let grounds = [];
 
 function jump(e) {
   if (!isGameOver) {
@@ -27,9 +29,7 @@ function jump(e) {
     }
   } else {
     if (e.code === "Space") {
-      isGameOver = false;
-      gameScore = 0;
-      obstacles = [];
+      startGame();
     }
   }
 }
@@ -57,6 +57,19 @@ function updateObstaclePosition() {
   }
 }
 
+// Sliding ground texture
+function updateGroundPosition() {
+  if (!isGameOver && grounds.length > 0) {
+    for (let i = 0; i < grounds.length; i++) {
+      grounds[i].coordinates.x -= DEFAULT_GAME_VELOCITY_X;
+
+      if (grounds[i].coordinates.x <= -grounds[i].width) {
+        grounds[i].coordinates.x += 2 * w;
+      }
+    }
+  }
+}
+
 function updateGameScore() {
   if (!isGameOver) {
     const now = performance.now();
@@ -77,7 +90,7 @@ function checkCollision() {
       player.coordinates.y < obstacle.coordinates.y + obstacle.height &&
       player.coordinates.y + player.height > obstacle.coordinates.y
     ) {
-      isGameOver = true;
+      stopGame();
     }
   });
 }
@@ -93,29 +106,47 @@ function generateObstacle() {
   }
 }
 
+function prepareGround() {
+  for (let i = 0; i < 2; i++) {
+    grounds.push(new Ground(i * w, DEFAULT_GAME_HEIGHT, w, h));
+  }
+}
+
+function stopGame() {
+  isGameOver = true;
+  c.style.filter = `blur(2px) grayscale(90%)`;
+  restart.style.display = `block`;
+}
+
+function startGame() {
+  isGameOver = false;
+  c.style.filter = ``;
+  restart.style.display = `none`;
+  gameScore = 0;
+  obstacles = [];
+}
+
 function draw() {
   updatePlayerPosition();
   generateObstacle();
   updateObstaclePosition();
+  updateGroundPosition();
   checkCollision();
   updateGameScore();
   ctx.fillStyle = "lightblue";
   ctx.fillRect(0, 0, c.clientWidth, c.clientHeight);
   ctx.fillStyle = "green";
-  ctx.fillRect(
-    player.coordinates.x,
-    player.coordinates.y,
-    player.width,
-    player.height
-  );
+  ctx.drawImage(player.texture, player.coordinates.x, player.coordinates.y);
   ctx.fillStyle = "purple";
   obstacles.forEach((obstacle) => {
-    ctx.fillRect(
+    ctx.drawImage(
+      obstacle.texture,
       obstacle.coordinates.x,
-      obstacle.coordinates.y,
-      obstacle.width,
-      obstacle.height
+      obstacle.coordinates.y
     );
+  });
+  grounds.forEach((ground) => {
+    ctx.drawImage(ground.texture, ground.coordinates.x, ground.coordinates.y);
   });
   ctx.font = "20px sans-serif";
   ctx.fillStyle = "black";
@@ -125,8 +156,10 @@ function draw() {
 
 function main() {
   scoreIntervalTimer = performance.now();
+  prepareGround();
   draw();
 }
 
 document.addEventListener("DOMContentLoaded", main);
 document.addEventListener("keydown", jump);
+restartButton.addEventListener("click", startGame);
