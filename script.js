@@ -1,4 +1,4 @@
-import { Player, Obstacle, Ground } from "./entities.js";
+import { Player, Obstacle, Ground, Background } from "./entities.js";
 
 const c = document.getElementById("canvas");
 const restartButton = document.getElementById("restart-button");
@@ -7,10 +7,10 @@ const w = c.clientWidth;
 const h = c.clientHeight;
 const DEFAULT_GAME_HEIGHT = h - 50;
 const DEFAULT_GAME_VELOCITY_X = 7;
-const GRAVITY = 0.1;
-let currentTime = performance.now();
-let isGenerated = false;
+const BACKGROUND_VELOCITY_X = 3;
+const GRAVITY = 1;
 let obstacleTimeout = null;
+let isGenerated = false;
 let isGameOver = false;
 let gameScore = 0;
 const SCORE_INTERVAL = 250; // ms
@@ -19,12 +19,12 @@ let scoreIntervalTimer = performance.now();
 const player = new Player(50, DEFAULT_GAME_HEIGHT);
 let obstacles = [];
 let grounds = [];
+let backgrounds = []; // moving background tiles
 
 function jump(e) {
   if (!isGameOver) {
     if (e.code === "Space" && !player.isJumping) {
-      currentTime = performance.now();
-      player.velocityY = 8.5;
+      player.velocityY = -20;
       player.isJumping = true;
     }
   } else {
@@ -35,13 +35,13 @@ function jump(e) {
 }
 function updatePlayerPosition() {
   if (!isGameOver && player.isJumping) {
-    const t = (performance.now() - currentTime) / 5;
-    player.coordinates.y =
-      DEFAULT_GAME_HEIGHT - player.velocityY * t + GRAVITY * t * t;
+    player.velocityY += GRAVITY;
+    player.coordinates.y += player.velocityY;
 
     if (player.coordinates.y >= DEFAULT_GAME_HEIGHT) {
       player.coordinates.y = DEFAULT_GAME_HEIGHT - player.height;
       player.isJumping = false;
+      player.velocityY = 0;
     }
   }
 }
@@ -65,6 +65,20 @@ function updateGroundPosition() {
 
       if (grounds[i].coordinates.x <= -grounds[i].width) {
         grounds[i].coordinates.x += 2 * w;
+      }
+    }
+  }
+}
+
+function updateBackgroundPosition() {
+  const bgCount = backgrounds.length;
+
+  if (!isGameOver && bgCount > 0) {
+    for (let i = 0; i < bgCount; i++) {
+      backgrounds[i].coordinates.x -= BACKGROUND_VELOCITY_X;
+
+      if (backgrounds[i].coordinates.x <= -backgrounds[i].dWidth) {
+        backgrounds[i].coordinates.x += w + w / 4;
       }
     }
   }
@@ -112,6 +126,25 @@ function prepareGround() {
   }
 }
 
+function prepareBackground() {
+  for (let i = 0; i <= 4; i++) {
+    backgrounds.push(
+      new Background(
+        (i * (w / 4)) % w,
+        0,
+        w / 4,
+        100,
+        i * (w / 4),
+        DEFAULT_GAME_HEIGHT - 100,
+        w / 4,
+        100
+      )
+    );
+  }
+
+  console.log(backgrounds);
+}
+
 function stopGame() {
   isGameOver = true;
   c.style.filter = `blur(2px) grayscale(90%)`;
@@ -131,10 +164,25 @@ function draw() {
   generateObstacle();
   updateObstaclePosition();
   updateGroundPosition();
+  updateBackgroundPosition();
   checkCollision();
   updateGameScore();
+
   ctx.fillStyle = "lightblue";
   ctx.fillRect(0, 0, c.clientWidth, c.clientHeight);
+  backgrounds.forEach((bg) => {
+    ctx.drawImage(
+      bg.texture,
+      bg.sliceCoordinates.x,
+      bg.sliceCoordinates.y,
+      bg.sWidth,
+      bg.sHeight,
+      bg.coordinates.x,
+      bg.coordinates.y,
+      bg.dWidth,
+      bg.dHeight
+    );
+  });
   ctx.fillStyle = "green";
   ctx.drawImage(player.texture, player.coordinates.x, player.coordinates.y);
   ctx.fillStyle = "purple";
@@ -148,6 +196,7 @@ function draw() {
   grounds.forEach((ground) => {
     ctx.drawImage(ground.texture, ground.coordinates.x, ground.coordinates.y);
   });
+
   ctx.font = "20px sans-serif";
   ctx.fillStyle = "black";
   ctx.fillText(gameScore, w - 50, 50);
@@ -157,6 +206,7 @@ function draw() {
 function main() {
   scoreIntervalTimer = performance.now();
   prepareGround();
+  prepareBackground();
   draw();
 }
 

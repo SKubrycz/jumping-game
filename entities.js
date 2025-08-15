@@ -58,3 +58,34 @@ export class Ground {
     this.texture.height = this.height;
   }
 }
+
+// Sliding background {
+export class Background {
+  dWidth = 0;
+  dWeight = 0;
+  coordinates = {
+    x: 0,
+    y: 0,
+  };
+  texture = new Image();
+  sliceCoordinates = {
+    x: 0,
+    y: 0,
+  };
+  sWidth = 0;
+  sHeight = 0;
+
+  constructor(sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
+    this.coordinates.x = dx;
+    this.coordinates.y = dy;
+    this.dWidth = dWidth;
+    this.dHeight = dHeight;
+    this.texture.src = "assets/background_1.png";
+    this.texture.width = this.dWidth;
+    this.texture.height = this.dWeight;
+    this.sliceCoordinates.x = sx;
+    this.sliceCoordinates.y = sy;
+    this.sWidth = sWidth;
+    this.sHeight = sHeight;
+  }
+}
