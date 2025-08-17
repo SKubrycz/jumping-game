@@ -50,9 +50,6 @@ function updateObstaclePosition() {
   if (!isGameOver && obstacles.length > 0) {
     for (let i = 0; i < obstacles.length; i++) {
       obstacles[i].coordinates.x -= DEFAULT_GAME_VELOCITY_X;
-      if (obstacles[i].coordinates.x <= -obstacles[i].width) {
-        obstacles.shift();
-      }
     }
   }
 }
@@ -111,12 +108,21 @@ function checkCollision() {
 
 function generateObstacle() {
   if (!isGameOver && !isGenerated) {
-    isGenerated = true;
-    const randomTime = Math.floor(Math.random() * 1000 * 2) + 2;
-    obstacleTimeout = setTimeout(() => {
-      obstacles.push(new Obstacle(w, DEFAULT_GAME_HEIGHT));
-      isGenerated = false;
-    }, randomTime);
+    const notVisibleObstacle = obstacles.findIndex((o) => o.coordinates.x < 0);
+    if (notVisibleObstacle != -1) {
+      isGenerated = true;
+      const randomTime = Math.floor(Math.random() * 1000 * 2) + 500;
+      obstacleTimeout = setTimeout(() => {
+        obstacles[notVisibleObstacle].coordinates.x = w;
+        isGenerated = false;
+      }, randomTime);
+    }
+  }
+}
+
+function prepareObstacles() {
+  for (let i = 0; i < 2; i++) {
+    obstacles.push(new Obstacle(w, DEFAULT_GAME_HEIGHT));
   }
 }
 
@@ -141,8 +147,6 @@ function prepareBackground() {
       )
     );
   }
-
-  console.log(backgrounds);
 }
 
 function stopGame() {
@@ -157,6 +161,7 @@ function startGame() {
   restart.style.display = `none`;
   gameScore = 0;
   obstacles = [];
+  prepareObstacles();
 }
 
 function draw() {
@@ -206,6 +211,7 @@ function draw() {
 function main() {
   scoreIntervalTimer = performance.now();
   prepareGround();
+  prepareObstacles();
   prepareBackground();
   draw();
 }
