@@ -21,14 +21,25 @@ export class Game {
   grounds = [];
   backgrounds = []; // moving background tiles
 
-  constructor(c) {
-    this.c = c;
+  static instance = null;
+
+  constructor() {
     this.ctx = this.c.getContext("2d");
     this.w = this.c.clientWidth;
     this.h = this.c.clientHeight;
     this.DEFAULT_GAME_HEIGHT = this.h - 50;
     this.player = new Player(50, this.DEFAULT_GAME_HEIGHT);
     this.restartButton.addEventListener("click", () => this.startGame());
+    document.addEventListener("keydown", (e) => this.jump(e));
+    Game.instance = this;
+  }
+
+  static getInstance() {
+    if (!Game.instance) {
+      Game.instance = new Game();
+    }
+
+    return Game.instance;
   }
 
   jump(e) {

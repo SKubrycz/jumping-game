@@ -1,6 +1,6 @@
 import { Game } from "./entities.js";
 
-const game = new Game(document.getElementById("canvas"));
+const game = Game.getInstance();
 
 function draw() {
   game.updatePlayerPosition();
@@ -63,4 +63,3 @@ function main() {
 }
 
 document.addEventListener("DOMContentLoaded", main);
-document.addEventListener("keydown", (e) => game.jump(e));
